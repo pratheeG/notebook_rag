@@ -1,0 +1,17 @@
+langchain==1.2.0
+langchain-core==1.2.4
+langchain-google-genai==4.1.2
+langchain-groq==1.1.1
+langgraph==1.0.5
+langsmith==0.5.0
+notebook==7.5.1
+python-dotenv==1.2.1
+pymongo==4.15.5
+langgraph-checkpoint-mongodb==0.3.0
+langchain-community==0.4.1
+pypdf==6.5.0
+langchain-huggingface==1.2.0
+sentence-transformers==5.2.0
+chromadb==1.3.7
+streamlit==1.52.2
+uuid==1.30
