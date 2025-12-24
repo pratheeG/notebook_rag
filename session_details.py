@@ -7,14 +7,14 @@ DATA_FILE = "user_data.json"
 def load_user_data(uuid):
     """Load user data by UUID - creates empty if new user"""
     if not os.path.exists(DATA_FILE):
-        return {"notebooks": {}}
+        return None
     
     try:
         with open(DATA_FILE, 'r') as f:
             all_data = json.load(f)
-            return all_data.get(uuid, {"notebooks": {}})
+            return all_data.get(uuid, None)
     except:
-        return {"notebooks": {}}
+        return None
 
 def save_user_data(uuid, data):
     """Save user data by UUID"""
