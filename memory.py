@@ -1,0 +1,9 @@
+from langgraph.checkpoint.mongodb import MongoDBSaver
+from pymongo import MongoClient
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+client = MongoClient(os.getenv("MONGODB_URI"))
+
+memory = MongoDBSaver(client)

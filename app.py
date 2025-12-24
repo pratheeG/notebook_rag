@@ -4,6 +4,8 @@ from langgraph_setup import graph  # Import your graph
 from langchain_core.messages import HumanMessage
 import uuid
 
+from session_details import save_user_data, load_user_data
+
 st.set_page_config(page_title="🔐 Secure Notebook RAG App", layout="wide")
 
 # UUID Authentication Gate
@@ -12,8 +14,7 @@ if "valid_uuid" not in st.session_state:
 if "expected_uuid" not in st.session_state:
     st.session_state.expected_uuid = None  # Set your UUID here or load from secrets
 
-# Set your expected UUID here (replace with your actual UUID)
-EXPECTED_UUID = "12345678-1234-1234-1234-123456789abc"  # Demo UUID - CHANGE THIS!
+EXPECTED_UUID = str(uuid.uuid4())
 
 # Main authentication gate
 if st.session_state.valid_uuid is None:
@@ -30,7 +31,7 @@ if st.session_state.valid_uuid is None:
     with col2:
         st.markdown(" ")
         if st.button("✅ Unlock App", use_container_width=True, type="primary"):
-            if uuid_input == EXPECTED_UUID:
+            if uuid_input is not None:
                 st.session_state.valid_uuid = uuid_input
                 st.session_state.expected_uuid = EXPECTED_UUID
                 st.success("✅ **App Unlocked!** Welcome to your private RAG notebooks.")
@@ -55,6 +56,14 @@ else:
 
     st.title("📓 Notebook RAG App")
     
+    user_data = load_user_data(st.session_state.valid_uuid)
+    print(user_data)
+    if user_data:
+        st.session_state.notebooks = user_data
+        print(user_data.keys())
+        notebook_name = list(user_data.keys())[0]
+        st.session_state.current_notebook = notebook_name
+
     # Sidebar - Notebooks (UUID prefixed for isolation)
     st.sidebar.header("📂 Notebooks")
     if st.sidebar.button("➕ New Notebook", use_container_width=True):
@@ -67,6 +76,7 @@ else:
         }
         st.session_state.current_notebook = new_name
         st.session_state.messages = []
+        save_user_data(st.session_state.valid_uuid, st.session_state.notebooks)
         st.rerun()
 
     # Notebook list
@@ -78,6 +88,8 @@ else:
 
     # Main chat area
     if st.session_state.current_notebook:
+        print("Current notebook:", st.session_state.current_notebook)
+        print("Session messages:", st.session_state.notebooks)
         notebook = st.session_state.notebooks[st.session_state.current_notebook]
         thread_id = notebook["thread_id"]
         
