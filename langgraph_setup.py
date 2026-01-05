@@ -4,14 +4,16 @@ from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import ToolNode, tools_condition
 from typing import TypedDict, Annotated, List
 
-import llm
-import memory
+from llm import llm
+from memory import memory
 
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
 def chatbot(state: State) -> State:
+    print("Chatbot node invoked")
+    print("ll ", llm)
     return {"messages": [llm.invoke(state["messages"])]}
 
 builder = StateGraph(State)

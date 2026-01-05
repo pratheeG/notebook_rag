@@ -1,7 +1,6 @@
 import streamlit as st
 from datetime import datetime
 from langgraph_setup import graph  # Import your graph
-from langchain_core.messages import HumanMessage
 import uuid
 
 from session_details import save_user_data, load_user_data
@@ -57,10 +56,8 @@ else:
     st.title("📓 Notebook RAG App")
     
     user_data = load_user_data(st.session_state.valid_uuid)
-    print(user_data)
     if user_data:
         st.session_state.notebooks = user_data
-        print(user_data.keys())
         notebook_name = list(user_data.keys())[0]
         st.session_state.current_notebook = notebook_name
 
@@ -88,8 +85,6 @@ else:
 
     # Main chat area
     if st.session_state.current_notebook:
-        print("Current notebook:", st.session_state.current_notebook)
-        print("Session messages:", st.session_state.notebooks)
         notebook = st.session_state.notebooks[st.session_state.current_notebook]
         thread_id = notebook["thread_id"]
         
@@ -114,8 +109,7 @@ else:
                 with st.spinner("🤖 Processing with RAG..."):
                     config = {"configurable": {"thread_id": thread_id}}
                     result = graph.invoke({
-                        "messages": [HumanMessage(content=prompt)],
-                        "thread_id": thread_id
+                        "messages": [{ "role": 'user', "content": prompt }],
                     }, config)
                     
                     response = result["messages"][-1].content
