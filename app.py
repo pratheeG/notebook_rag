@@ -59,7 +59,8 @@ else:
     if user_data:
         st.session_state.notebooks = user_data
         notebook_name = list(user_data.keys())[0]
-        st.session_state.current_notebook = notebook_name
+        if st.session_state.current_notebook is None:
+            st.session_state.current_notebook = notebook_name
 
     # Sidebar - Notebooks (UUID prefixed for isolation)
     st.sidebar.header("📂 Notebooks")
@@ -78,7 +79,9 @@ else:
 
     # Notebook list
     for name in st.session_state.notebooks:
-        if st.sidebar.button(name, use_container_width=True):
+        is_active = (name == st.session_state.current_notebook)
+        if st.sidebar.button(name, use_container_width=True, type="primary" if is_active else "secondary", key=f"nb-btn-{name}"):
+            print("----> ", name)
             st.session_state.current_notebook = name
             st.session_state.messages = []
             st.rerun()
