@@ -3,9 +3,11 @@ from datetime import datetime
 from langgraph_setup import graph  # Import your graph
 import uuid
 
+from load_messages import load_thread_messages
 from session_details import save_user_data, load_user_data
 
 st.set_page_config(page_title="🔐 Secure Notebook RAG App", layout="wide")
+
 
 # UUID Authentication Gate
 if "valid_uuid" not in st.session_state:
@@ -89,6 +91,8 @@ else:
     if st.session_state.current_notebook:
         notebook = st.session_state.notebooks[st.session_state.current_notebook]
         thread_id = notebook["thread_id"]
+        st.session_state.messages = load_thread_messages(thread_id)
+
         
         st.subheader(f"**{st.session_state.current_notebook}**")
         st.caption(f"🔑 UUID: {st.session_state.valid_uuid[:8]}... | Thread: {thread_id[-12:]}")
