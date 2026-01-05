@@ -83,45 +83,43 @@ else:
             st.session_state.messages = []
             st.rerun()
 
-    # Main chat area
     if st.session_state.current_notebook:
         notebook = st.session_state.notebooks[st.session_state.current_notebook]
         thread_id = notebook["thread_id"]
         
         st.subheader(f"**{st.session_state.current_notebook}**")
-        st.caption(f"🔑 UUID: {st.session_state.valid_uuid[:8]}... | Thread: {thread_id[-12:]} | Created: {notebook['created']}")
-        
-        # Chat input
-        col1 = st.columns([7])[0]
-        with col1:
-            prompt_submission = st.chat_input("Ask about your notebook docs...", key="prompt")
+        st.caption(f"🔑 UUID: {st.session_state.valid_uuid[:8]}... | Thread: {thread_id[-12:]}")
 
-        if prompt_submission:
-            prompt = prompt_submission
-            
-            # Add user message
+        # --- 1. DISPLAY CHAT HISTORY FIRST ---
+        # This ensures history is at the top/middle of the page
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.write(msg["content"])
+
+        # --- 2. CHAT INPUT AT THE BOTTOM ---
+        # Removing columns ensures it uses the standard sticky-bottom behavior
+        prompt = st.chat_input("Ask about your notebook docs...")
+
+        if prompt:
+            # 1. Add user message to state and UI
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.write(prompt)
             
-            # Call LangGraph
+            # 2. Call LangGraph
             with st.chat_message("assistant"):
                 with st.spinner("🤖 Processing with RAG..."):
                     config = {"configurable": {"thread_id": thread_id}}
                     result = graph.invoke({
-                        "messages": [{ "role": 'user', "content": prompt }],
+                        "messages": [("user", prompt)], # Simplified message format
                     }, config)
                     
                     response = result["messages"][-1].content
                     st.session_state.messages.append({"role": "assistant", "content": response})
                     st.write(response)
             
+            # 3. Rerun to refresh history order
             st.rerun()
-        
-        # Show chat history
-        for msg in st.session_state.messages[-10:]:
-            with st.chat_message(msg["role"]):
-                st.write(msg["content"])
 
     else:
         st.info("👈 **Click 'New Notebook'** to start chatting with your private RAG!")
