@@ -112,23 +112,35 @@ else:
             with st.chat_message("user"):
                 st.write(prompt)
             
-            # if prompt.files:
-            #     for file in prompt.files:
-            #         st.write(f"Uploaded: {file.name}")
-            
-            # 2. Call LangGraph
+            # 2. Check if the LAST assistant message was the permission request
+            is_asking_permission = False
+            if len(st.session_state.messages) > 1:
+                last_bot_msg = st.session_state.messages[-2] # -1 is the prompt we just added, -2 is previous bot msg
+                if "would you like me to answer using my general knowledge" in last_bot_msg["content"].lower():
+                    is_asking_permission = True
+
+            # 3. Call LangGraph
             with st.chat_message("assistant"):
-                with st.spinner("🤖 Processing your input..."):
+                with st.spinner("🤖 Processing..."):
                     config = {"configurable": {"thread_id": thread_id}}
-                    result = graph.invoke({
-                        "messages": [("user", prompt)], # Simplified message format
-                    }, config)
+                    
+                    # --- THE LOGIC GATE ---
+                    if is_asking_permission:
+                        if "yes" in prompt.lower():
+                            # If user said yes, we send a system-level instruction to the LLM
+                            final_prompt = f"The user said YES. Ignore the tool results and answer the query: '{st.session_state.messages[-3]['content']}' using your own AI knowledge."
+                        else:
+                            final_prompt = "The user said NO. Just politely explain that you can only answer based on uploaded documents and ask if they have another document-related question."
+                    else:
+                        final_prompt = prompt
+
+                    result = graph.invoke({"messages": [("user", final_prompt)]}, config)
                     
                     response = result["messages"][-1].content
                     st.session_state.messages.append({"role": "assistant", "content": response})
                     st.write(response)
-            
-            # 3. Rerun to refresh history order
+        
+            # 4. Rerun to refresh history order
             st.rerun()
 
     else:
