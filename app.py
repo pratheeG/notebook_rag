@@ -56,7 +56,6 @@ else:
         st.session_state.messages = []
 
     st.title("📓 Notebook RAG App")
-    
     user_data = load_user_data(st.session_state.valid_uuid)
     if user_data:
         st.session_state.notebooks = user_data
@@ -113,9 +112,13 @@ else:
             with st.chat_message("user"):
                 st.write(prompt)
             
+            # if prompt.files:
+            #     for file in prompt.files:
+            #         st.write(f"Uploaded: {file.name}")
+            
             # 2. Call LangGraph
             with st.chat_message("assistant"):
-                with st.spinner("🤖 Processing with RAG..."):
+                with st.spinner("🤖 Processing your input..."):
                     config = {"configurable": {"thread_id": thread_id}}
                     result = graph.invoke({
                         "messages": [("user", prompt)], # Simplified message format
