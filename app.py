@@ -3,6 +3,7 @@ from datetime import datetime
 from v2.agents.langgraph import graph  # Import your graph
 import uuid
 
+from v2.utils.database import index_uploaded_document
 from v2.utils.load_messages import load_thread_messages
 from v2.utils.session_details import save_user_data, load_user_data
 
@@ -104,13 +105,36 @@ else:
 
         # --- 2. CHAT INPUT AT THE BOTTOM ---
         # Removing columns ensures it uses the standard sticky-bottom behavior
-        prompt = st.chat_input("Ask about your notebook docs...")
+        prompt = st.chat_input("Ask about your notebook docs...", accept_file=True, file_type="pdf")
 
-        if prompt:
+        if prompt is None:
+            st.info("💡 You can upload PDF documents to index them for RAG.")
+            st.caption("Try uploading a PDF using the chat input!")
+            st.stop()
+
+        if prompt.files:
+            for uploaded_file in prompt.files:
+                with st.spinner(f"Indexing {uploaded_file.name}..."):
+                    # Call the indexing function
+                    index_uploaded_document(uploaded_file, namespace=thread_id)
+                    filename = uploaded_file.name
+                    config = {"configurable": {"thread_id": thread_id}}
+                    current_state = graph.get_state(config)
+                    existing_files = current_state.values.get("active_files", [])
+                    
+                    if filename not in existing_files:
+                        existing_files.append(filename)
+                    # Update the state in MongoDB
+                    graph.update_state(config, {"active_files": existing_files})
+
+                st.success(f"File '{uploaded_file.name}' is now searchable!")
+                st.session_state.messages.append({"role": "assistant", "content": f"File '{uploaded_file.name}' is now searchable!"})
+
+        if prompt.text:
             # 1. Add user message to state and UI
-            st.session_state.messages.append({"role": "user", "content": prompt})
+            st.session_state.messages.append({"role": "user", "content": prompt.text})
             with st.chat_message("user"):
-                st.write(prompt)
+                st.write(prompt.text)
             
             # 2. Check if the LAST assistant message was the permission request
             is_asking_permission = False
@@ -126,13 +150,13 @@ else:
                     
                     # --- THE LOGIC GATE ---
                     if is_asking_permission:
-                        if "yes" in prompt.lower():
+                        if "yes" in prompt.text.lower():
                             # If user said yes, we send a system-level instruction to the LLM
                             final_prompt = f"The user said YES. Ignore the tool results and answer the query: '{st.session_state.messages[-3]['content']}' using your own AI knowledge."
                         else:
                             final_prompt = "The user said NO. Just politely explain that you can only answer based on uploaded documents and ask if they have another document-related question."
                     else:
-                        final_prompt = prompt
+                        final_prompt = prompt.text
 
                     result = graph.invoke({"messages": [("user", final_prompt)]}, config)
                     

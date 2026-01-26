@@ -1,6 +1,10 @@
 from langchain_pinecone import PineconeVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+import tempfile
+
 from pinecone import Pinecone, ServerlessSpec
 import os
 
@@ -36,3 +40,29 @@ embeddings = HuggingFaceEmbeddings(model_name="all-MiniLm-L6-v2")
 
 def getVectorStore(namespace: str) -> PineconeVectorStore:
     return PineconeVectorStore(index=index, embedding=embeddings, namespace=namespace)
+
+def index_uploaded_document(file, namespace: str):
+    vector_store = getVectorStore(namespace)
+    # vector_store.add_texts(
+    #     texts=[file.read().decode('utf-8')],
+    #     metadatas=[{"source": file.name}]
+    # )
+    with tempfile.NamedTemporaryFile(delete=False) as tf:
+        tf.write(file.getbuffer())
+        file_path = tf.name
+    loader = PyPDFLoader(file_path)
+    docs = loader.load()
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=150)
+    splits = text_splitter.split_documents(docs)
+
+    for split in splits:
+        split.metadata["source"] = file.name
+        split.metadata["thread_id"] = namespace
+
+    PineconeVectorStore.from_documents(
+        splits, 
+        embeddings, 
+        index_name=index_name, 
+        namespace=namespace
+    )

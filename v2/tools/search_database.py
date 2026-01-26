@@ -22,6 +22,7 @@ grader_chain = grader_prompt | structured_grader
 @tool
 def search_pinecone(query: str, config: RunnableConfig) -> str:
     """Search for specific details in the uploaded documents."""
+    print(f"search_pinecone called with query: {query}")
     thread_id = config["configurable"].get("thread_id", "")
     vectorStore = getVectorStore(namespace=thread_id)
     retriever = vectorStore.as_retriever(search_kwargs={"k": 2})
@@ -29,7 +30,8 @@ def search_pinecone(query: str, config: RunnableConfig) -> str:
     try:
         docs = retriever.invoke(query)
     except Exception as e:
-        return f"Error retrieving documents: {str(e)}"
+        print(f"Error retrieving documents: {str(e)}")
+        docs = []
     
     if not docs:
         return "No documents matched"

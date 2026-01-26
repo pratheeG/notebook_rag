@@ -22,6 +22,7 @@ def summarize_document_tool(query: str, config: RunnableConfig) -> str:
     """Use this when the user asks for a general summary, a TL;DR, or an overview of the documents.
     Pass a descriptive query like 'main themes' if the user just says 'summarize'."""
 
+    print(f"summarize_document_tool called with query: {query}")
     thread_id = config["configurable"].get("thread_id", "")
     vectorStore = getVectorStore(namespace=thread_id)
     retriever = vectorStore.as_retriever(search_kwargs={"k": 2})
