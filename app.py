@@ -117,18 +117,16 @@ else:
                 with st.spinner(f"Indexing {uploaded_file.name}..."):
                     # Call the indexing function
                     index_uploaded_document(uploaded_file, namespace=thread_id)
-                    filename = uploaded_file.name
+                    file_msg = {
+                        "role": "assistant", 
+                        "content": f"📁 **File Uploaded:** {uploaded_file.name}. I have indexed this document and it is ready for your questions."
+                    }
+                    st.session_state.messages.append({"role": "assistant", "content": f"File '{uploaded_file.name}' is now searchable!"})
                     config = {"configurable": {"thread_id": thread_id}}
-                    current_state = graph.get_state(config)
-                    existing_files = current_state.values.get("active_files", [])
-                    
-                    if filename not in existing_files:
-                        existing_files.append(filename)
-                    # Update the state in MongoDB
-                    graph.update_state(config, {"active_files": existing_files})
+                    graph.update_state(config, {"messages": [file_msg]})
 
                 st.success(f"File '{uploaded_file.name}' is now searchable!")
-                st.session_state.messages.append({"role": "assistant", "content": f"File '{uploaded_file.name}' is now searchable!"})
+                # st.session_state.messages.append({"role": "assistant", "content": f"File '{uploaded_file.name}' is now searchable!"})
 
         if prompt.text:
             # 1. Add user message to state and UI
