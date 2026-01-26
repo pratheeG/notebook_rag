@@ -3,6 +3,7 @@ from v2.agents.state import getState
 from v2.states.summaryState import SummaryState
 from langgraph.graph import  END, START
 from langchain_core.tools import tool
+from langchain_core.runnables import RunnableConfig
 
 from v2.utils.database import getVectorStore
 
@@ -17,11 +18,12 @@ summary_workflow.add_edge("reduce_node", END)
 summary_app = summary_workflow.compile()
 
 @tool
-def summarize_document_tool(query: str) -> str:
+def summarize_document_tool(query: str, config: RunnableConfig) -> str:
     """Use this when the user asks for a general summary, a TL;DR, or an overview of the documents.
     Pass a descriptive query like 'main themes' if the user just says 'summarize'."""
 
-    vectorStore = getVectorStore()
+    thread_id = config["configurable"].get("thread_id", "")
+    vectorStore = getVectorStore(namespace=thread_id)
     retriever = vectorStore.as_retriever(search_kwargs={"k": 2})
     
     docs = retriever.vectorstore.as_retriever(search_kwargs={"k": 100}).invoke("")

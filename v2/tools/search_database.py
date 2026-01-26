@@ -1,5 +1,6 @@
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableConfig
 from v2.states.searchDBState import GradeRelevance
 from v2.utils.llm import llm
 from v2.utils.database import getVectorStore
@@ -19,9 +20,10 @@ structured_grader = llm.with_structured_output(GradeRelevance)
 grader_chain = grader_prompt | structured_grader
 
 @tool
-def search_pinecone(query: str) -> str:
+def search_pinecone(query: str, config: RunnableConfig) -> str:
     """Search for specific details in the uploaded documents."""
-    vectorStore = getVectorStore()
+    thread_id = config["configurable"].get("thread_id", "")
+    vectorStore = getVectorStore(namespace=thread_id)
     retriever = vectorStore.as_retriever(search_kwargs={"k": 2})
 
     try:

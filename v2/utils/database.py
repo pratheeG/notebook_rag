@@ -34,5 +34,5 @@ index = pc.Index(
 
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLm-L6-v2")
 
-def getVectorStore():
-    return PineconeVectorStore(index=index, embedding=embeddings)
+def getVectorStore(namespace: str) -> PineconeVectorStore:
+    return PineconeVectorStore(index=index, embedding=embeddings, namespace=namespace)
