@@ -46,15 +46,12 @@ def search_pinecone(query: str) -> str:
         return "No documents matched"
 
     # --- SEMANTIC CHECK ---
-    print(f"--- SEMANTIC CHECK FOR QUERY: {query} ---")
     try:
         grading_result = grader_chain.invoke({"query": query, "content": content})
         
         if grading_result.binary_score.lower() == "yes":
-            print("--- GRADE: RELEVANT ---")
             return content
         else:
-            print("--- GRADE: NOT RELEVANT ---")
             return "No documents matched"
             
     except Exception as e:

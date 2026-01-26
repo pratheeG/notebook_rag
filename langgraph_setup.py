@@ -8,8 +8,9 @@ from langchain_core.messages import SystemMessage
 from llm import llm
 from memory import memory
 from retriver import search_pinecone
+from summary import summarize_document_tool
 
-tools = [search_pinecone]
+tools = [search_pinecone, summarize_document_tool]
 
 llm_with_tools = llm.bind_tools(tools)
 
@@ -19,6 +20,12 @@ class State(TypedDict):
 
 def grade_results(state: State):
     last_message = state["messages"][-1]
+    
+    tool_called = getattr(last_message, "name", "")
+
+    # 2. If it's a summary, we don't grade it. Just go back to the chatbot to present it.
+    if tool_called == "summarize_document_tool" and len(last_message.content) > 5:
+        return "generate_answer"
     
     # After 'tools' node, the last message is a ToolMessage
     # We check if the search failed or returned the 'No documents' string
@@ -39,15 +46,17 @@ def chatbot(state: State) -> State:
     messages = state["messages"]
     system_message = SystemMessage(content=
         "You are a helpful assistant that answers questions based ONLY on uploaded documents. "
-        "You MUST use the 'search_pinecone' tool for every user question to find relevant information. "
-        "If the tool returns 'No documents matched', do not make up an answer. "
+        "You have two specific tools at your disposal:\n"
+            "1. 'search_pinecone': Use this for specific factual questions (e.g., 'What is the price of X?').\n"
+            "2. 'summarize_document_tool': Use this for general requests (e.g., 'Summarize this', 'Give me an overview').\n\n"
+        "Do not call both at once. Choose the one that fits the user's intent."
+        "If the tool returns str having the 'No documents matched' or 'No documents found to summarize', do not make up an answer. "
     )
 
     full_messages = [system_message] + messages
     
     # Fix: Ensure no ToolMessages have empty content before sending to LLM
     for msg in full_messages:
-        print(msg.content)
         if type(msg).__name__ == "ToolMessage" and not msg.content:
             msg.content = "No data returned from tool."
 
