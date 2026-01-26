@@ -1,7 +1,10 @@
-import streamlit as st
 from langgraph.checkpoint.mongodb import MongoDBSaver
 from pymongo import MongoClient
 
-client = MongoClient(st.secrets["MONGODB_URI"])
+from v2.utils.config import getEnvValue
+
+MONGODB_URI = getEnvValue('MONGODB_URI')
+
+client = MongoClient(MONGODB_URI)
 
 memory = MongoDBSaver(client)

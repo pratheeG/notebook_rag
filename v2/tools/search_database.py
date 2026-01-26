@@ -1,18 +1,10 @@
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel, Field
-from llm import llm # Ensure your LLM is imported
-from vector_database import vectorstore
+from v2.states.searchDBState import GradeRelevance
+from v2.utils.llm import llm
+from v2.utils.database import getVectorStore
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
-# 1. Define the output structure for the grader
-class GradeRelevance(BaseModel):
-    binary_score: str = Field(
-        description="Is the retrieved content relevant to the query? 'yes' or 'no'"
-    )
-
-# 2. Create the Grader chain
 grader_system_prompt = """You are a grader assessing relevance of a retrieved document to a user question. 
 If the document contains keyword(s) or semantic meaning related to the user question, grade it as relevant. 
 Give a binary score 'yes' or 'no' to indicate whether the document is relevant to the question."""
@@ -29,7 +21,9 @@ grader_chain = grader_prompt | structured_grader
 @tool
 def search_pinecone(query: str) -> str:
     """Search for specific details in the uploaded documents."""
-    
+    vectorStore = getVectorStore()
+    retriever = vectorStore.as_retriever(search_kwargs={"k": 2})
+
     try:
         docs = retriever.invoke(query)
     except Exception as e:

@@ -1,12 +1,16 @@
-import streamlit as st
 from langchain_pinecone import PineconeVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from pinecone import Pinecone, ServerlessSpec
 import os
-os.environ['HF_TOKEN'] = st.secrets['HF_TOKEN']
 
-pc = Pinecone(api_key=st.secrets['PINECONE_API_KEY'])
+from v2.utils.config import getEnvValue
+
+HF_TOKEN = getEnvValue('HF_TOKEN')
+
+os.environ['HF_TOKEN'] = HF_TOKEN
+
+pc = Pinecone(api_key=getEnvValue('PINECONE_API_KEY'))
 
 index_name = "notebook-rag-index"
 
@@ -30,4 +34,5 @@ index = pc.Index(
 
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLm-L6-v2")
 
-vectorstore = PineconeVectorStore(index=index, embedding=embeddings)
+def getVectorStore():
+    return PineconeVectorStore(index=index, embedding=embeddings)

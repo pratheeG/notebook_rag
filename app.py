@@ -1,10 +1,10 @@
 import streamlit as st
 from datetime import datetime
-from langgraph_setup import graph  # Import your graph
+from v2.agents.langgraph import graph  # Import your graph
 import uuid
 
-from load_messages import load_thread_messages
-from session_details import save_user_data, load_user_data
+from v2.utils.load_messages import load_thread_messages
+from v2.utils.session_details import save_user_data, load_user_data
 
 st.set_page_config(page_title="🔐 Secure Notebook RAG App", layout="wide")
 
